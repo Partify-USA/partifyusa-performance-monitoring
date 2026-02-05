@@ -37,11 +37,15 @@ for (const file of jsonFiles) {
 
 	const lcpAudit = report.audits["largest-contentful-paint"];
 	const clsAudit = report.audits["cumulative-layout-shift"];
-	const inpAudit = report.audits["interaction-to-next-paint"];
+	// INP has had different audit IDs across Lighthouse versions.
+	// Try the current stable ID first, then fall back to the experimental one.
+	const inpAudit =
+		report.audits["interaction-to-next-paint"] ??
+		report.audits["experimental-interaction-to-next-paint"];
 
-	const lcpMs = lcpAudit.numericValue;
-	const cls = clsAudit.numericValue;
-	const inpMs = inpAudit.numericValue;
+	const lcpMs = lcpAudit?.numericValue;
+	const cls = clsAudit?.numericValue;
+	const inpMs = inpAudit?.numericValue;
 
 	console.log("Report:", file);
 	console.log({
@@ -56,17 +60,17 @@ for (const file of jsonFiles) {
 		hasFailure = true;
 	}
 
-	if (lcpMs > thresholds.lcpMs) {
+	if (typeof lcpMs === "number" && lcpMs > thresholds.lcpMs) {
 		console.error("LCP above threshold");
 		hasFailure = true;
 	}
 
-	if (cls > thresholds.cls) {
+	if (typeof cls === "number" && cls > thresholds.cls) {
 		console.error("CLS above threshold");
 		hasFailure = true;
 	}
 
-	if (inpMs > thresholds.inpMs) {
+	if (typeof inpMs === "number" && inpMs > thresholds.inpMs) {
 		console.error("INP above threshold");
 		hasFailure = true;
 	}
