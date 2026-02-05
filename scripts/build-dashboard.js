@@ -8,6 +8,10 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const reportsDir = path.join(rootDir, "lighthouse-reports");
 const siteDir = path.join(rootDir, "site");
+const existingSiteDir = process.env.EXISTING_SITE_DIR
+	? path.resolve(rootDir, process.env.EXISTING_SITE_DIR)
+	: null;
+const runId = process.env.GITHUB_RUN_ID ?? "local";
 
 async function getHtmlReports() {
 	try {
@@ -60,7 +64,19 @@ function parseReportFile(file) {
 async function buildDashboard() {
 	const htmlFiles = await getHtmlReports();
 
-	await mkdir(siteDir, { recursive: true });
+	// Start from any existing site (from previous runs) so we keep history.
+	if (existingSiteDir) {
+		try {
+			await mkdir(siteDir, { recursive: true });
+			await cp(existingSiteDir, siteDir, { recursive: true });
+		} catch (error) {
+			if (!(error && error.code === "ENOENT")) {
+				throw error;
+			}
+		}
+	} else {
+		await mkdir(siteDir, { recursive: true });
+	}
 
 	if (htmlFiles.length === 0) {
 		const emptyHtml = `<!DOCTYPE html>
@@ -84,22 +100,47 @@ async function buildDashboard() {
 		return;
 	}
 
-	// Copy reports into the site directory so they can be served by Pages.
-	await mkdir(path.join(siteDir, "lighthouse-reports"), { recursive: true });
-	await cp(reportsDir, path.join(siteDir, "lighthouse-reports"), {
-		recursive: true,
+	// Copy current run's reports into a run-specific folder under site/runs/<runId>/
+	const runDir = path.join(siteDir, "runs", runId, "lighthouse-reports");
+	await mkdir(runDir, { recursive: true });
+	await cp(reportsDir, runDir, { recursive: true });
+
+	// Collect all report entries across all runs.
+	const runsRoot = path.join(siteDir, "runs");
+	const runIds = await readdir(runsRoot);
+	const allEntries = [];
+
+	for (const id of runIds) {
+		const reportsPath = path.join(runsRoot, id, "lighthouse-reports");
+		let files;
+		try {
+			files = await readdir(reportsPath);
+		} catch {
+			continue;
+		}
+		for (const file of files) {
+			if (!file.endsWith(".html")) continue;
+			const info = parseReportFile(file);
+			allEntries.push({
+				...info,
+				runId: id,
+				href: `runs/${id}/lighthouse-reports/${file}`,
+			});
+		}
+	}
+
+	// Sort newest first by run and file.
+	allEntries.sort((a, b) => {
+		if (a.runId === b.runId) return b.file.localeCompare(a.file);
+		return b.runId.localeCompare(a.runId);
 	});
 
-	const entries = htmlFiles.map(parseReportFile);
-
-	// Sort newest first by timestamp/file name.
-	entries.sort((a, b) => b.file.localeCompare(a.file));
-
-	const rows = entries
+	const rows = allEntries
 		.map((entry) => {
 			const presetLabel = entry.preset ? entry.preset : "";
 			const timestampLabel = entry.timestamp ? entry.timestamp : "";
 			return `<tr>
+				<td>${entry.runId}</td>
 				<td>${entry.page}</td>
 				<td>${presetLabel}</td>
 				<td>${timestampLabel}</td>
@@ -128,10 +169,11 @@ async function buildDashboard() {
 </head>
 <body>
 	<h1>Lighthouse Dashboard</h1>
-	<p class="subtitle">Latest Lighthouse reports for monitored URLs.</p>
+	<p class="subtitle">History of Lighthouse reports for all monitored URLs.</p>
 	<table>
 		<thead>
 			<tr>
+				<th>Run</th>
 				<th>Page</th>
 				<th>Preset</th>
 				<th>Timestamp</th>
