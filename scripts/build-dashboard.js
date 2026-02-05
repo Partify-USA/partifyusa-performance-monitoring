@@ -104,25 +104,37 @@ async function buildDashboard() {
 		});
 	}
 
-	const allEntries = htmlFiles.map((file) => {
-		const info = parseReportFile(file);
-		return {
-			...info,
-			runId: "current",
-			href: `lighthouse-reports/${file}`,
-		};
+	// Build table rows from history, newest first.
+	const historyEntries = history.slice();
+
+	historyEntries.sort((a, b) => {
+		const ta = a.fetchTime ? Date.parse(a.fetchTime) || 0 : 0;
+		const tb = b.fetchTime ? Date.parse(b.fetchTime) || 0 : 0;
+		if (tb !== ta) return tb - ta;
+		const ra = typeof a.runNumber === "number" ? a.runNumber : 0;
+		const rb = typeof b.runNumber === "number" ? b.runNumber : 0;
+		return rb - ra;
 	});
 
-	const rows = allEntries
+	const rows = historyEntries
 		.map((entry) => {
-			const presetLabel = entry.preset ? entry.preset : "";
-			const timestampLabel = entry.timestamp ? entry.timestamp : "";
+			const runLabel =
+				typeof entry.runNumber === "number"
+					? entry.runNumber
+					: entry.runId || "";
+			const pageLabel = entry.page || "";
+			const presetLabel = entry.preset || "";
+			const timestampLabel = entry.fetchTime
+				? new Date(entry.fetchTime).toLocaleString()
+				: "";
+			const href = entry.runUrl || "";
+			const linkCell = href ? `<a href="${href}">View run</a>` : "";
 			return `<tr>
-				<td>${entry.runId}</td>
-				<td>${entry.page}</td>
+				<td>${runLabel}</td>
+				<td>${pageLabel}</td>
 				<td>${presetLabel}</td>
 				<td>${timestampLabel}</td>
-				<td><a href="${entry.href}">View report</a></td>
+				<td>${linkCell}</td>
 			</tr>`;
 		})
 		.join("\n");
