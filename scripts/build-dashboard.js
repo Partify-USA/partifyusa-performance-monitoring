@@ -1,4 +1,4 @@
-import { readdir, mkdir, cp, writeFile } from "node:fs/promises";
+import { readdir, mkdir, cp, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -109,6 +109,7 @@ async function buildDashboard() {
 	const runsRoot = path.join(siteDir, "runs");
 	const runIds = await readdir(runsRoot);
 	const allEntries = [];
+	const series = [];
 
 	for (const id of runIds) {
 		const reportsPath = path.join(runsRoot, id, "lighthouse-reports");
@@ -119,13 +120,47 @@ async function buildDashboard() {
 			continue;
 		}
 		for (const file of files) {
-			if (!file.endsWith(".html")) continue;
-			const info = parseReportFile(file);
-			allEntries.push({
-				...info,
-				runId: id,
-				href: `runs/${id}/lighthouse-reports/${file}`,
-			});
+			if (file.endsWith(".html")) {
+				const info = parseReportFile(file);
+				allEntries.push({
+					...info,
+					runId: id,
+					href: `runs/${id}/lighthouse-reports/${file}`,
+				});
+			} else if (file.endsWith(".json")) {
+				try {
+					const jsonPath = path.join(reportsPath, file);
+					const raw = await readFile(jsonPath, "utf8");
+					const report = JSON.parse(raw);
+
+					const categories = report.categories ?? {};
+					const perf = categories.performance?.score ?? null;
+					const acces = categories.accessibility?.score ?? null;
+					const bp = categories["best-practices"]?.score ?? null;
+					const seo = categories.seo?.score ?? null;
+
+					// Use Lighthouse fetchTime if available, otherwise fall back to file name.
+					const fetchTime =
+						report.lighthouseResult?.fetchTime ?? report.fetchTime ?? null;
+
+					const parsed = parseReportFile(file.replace(/\.json$/i, ".html"));
+
+					series.push({
+						runId: id,
+						page: parsed.page,
+						preset: parsed.preset,
+						fetchTime,
+						metrics: {
+							performance: perf,
+							accessibility: acces,
+							bestPractices: bp,
+							seo,
+						},
+					});
+				} catch {
+					// Ignore malformed JSON or missing fields for trend data.
+				}
+			}
 		}
 	}
 
@@ -170,6 +205,29 @@ async function buildDashboard() {
 <body>
 	<h1>Lighthouse Dashboard</h1>
 	<p class="subtitle">History of Lighthouse reports for all monitored URLs.</p>
+
+	<section id="charts">
+		<h2>Trends</h2>
+		<p class="subtitle">Select a page, preset, and metric to view score trends over time.</p>
+		<div style="margin-bottom: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+			<label>Page
+				<select id="pageSelect"></select>
+			</label>
+			<label>Preset
+				<select id="presetSelect"></select>
+			</label>
+			<label>Metric
+				<select id="metricSelect">
+					<option value="performance">Performance</option>
+					<option value="accessibility">Accessibility</option>
+					<option value="bestPractices">Best Practices</option>
+					<option value="seo">SEO</option>
+				</select>
+			</label>
+		</div>
+		<canvas id="trendChart" height="120"></canvas>
+	</section>
+
 	<table>
 		<thead>
 			<tr>
@@ -184,6 +242,126 @@ async function buildDashboard() {
 ${rows}
 		</tbody>
 	</table>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha256-YoJtQW9vZpaMnQ7tHWCkug4J3yoHgZ2d2jlK0PG2lws=" crossorigin="anonymous"></script>
+	<script id="lh-data" type="application/json">${JSON.stringify(
+			series,
+		)}<\/script>
+	<script>
+	(function() {
+		const raw = document.getElementById("lh-data").textContent;
+		let data = [];
+		try {
+			data = JSON.parse(raw);
+		} catch {}
+		if (!Array.isArray(data) || data.length === 0) return;
+
+		// Normalize and sort by time within each series.
+		for (const d of data) {
+			if (d.fetchTime) {
+				d._ts = Date.parse(d.fetchTime) || null;
+			} else {
+				d._ts = null;
+			}
+		}
+
+		const pages = [...new Set(data.map((d) => d.page))].sort();
+		const presets = [...new Set(data.map((d) => d.preset).filter(Boolean))].sort();
+
+		const pageSelect = document.getElementById("pageSelect");
+		const presetSelect = document.getElementById("presetSelect");
+		const metricSelect = document.getElementById("metricSelect");
+
+		pages.forEach((p) => {
+			const opt = document.createElement("option");
+			opt.value = p;
+			opt.textContent = p;
+			pageSelect.appendChild(opt);
+		});
+
+		presets.forEach((p) => {
+			const opt = document.createElement("option");
+			opt.value = p;
+			opt.textContent = p;
+			presetSelect.appendChild(opt);
+		});
+
+		if (pages.length) pageSelect.value = pages[0];
+		if (presets.length) presetSelect.value = presets[0];
+
+		const ctx = document.getElementById("trendChart");
+		let chart;
+
+		function updateChart() {
+			const page = pageSelect.value;
+			const preset = presetSelect.value;
+			const metric = metricSelect.value;
+
+			let seriesPoints = data.filter(
+				(d) => d.page === page && d.preset === preset && d.metrics[metric] != null,
+			);
+
+			seriesPoints = seriesPoints
+				.filter((d) => d._ts != null)
+				.sort((a, b) => a._ts - b._ts);
+
+			const labels = seriesPoints.map((d) => new Date(d._ts).toLocaleString());
+			const values = seriesPoints.map((d) => (d.metrics[metric] || 0) * 100);
+
+			const metricLabelMap = {
+				performance: "Performance",
+				accessibility: "Accessibility",
+				bestPractices: "Best Practices",
+				seo: "SEO",
+			};
+
+			const label = `${metricLabelMap[metric] || metric} score for ${page} (${preset})`;
+
+			if (chart) chart.destroy();
+
+			chart = new Chart(ctx, {
+				type: "line",
+				data: {
+					labels,
+					datasets: [
+						{
+							label,
+							data: values,
+							borderColor: "#38bdf8",
+							backgroundColor: "rgba(56, 189, 248, 0.2)",
+							tension: 0.25,
+							pointRadius: 3,
+						},
+					],
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						legend: { labels: { color: "#e5e7eb" } },
+					},
+					scales: {
+						x: {
+							ticks: { color: "#9ca3af" },
+							grid: { color: "#1f2937" },
+						},
+						y: {
+							min: 0,
+							max: 100,
+							ticks: { color: "#9ca3af" },
+							grid: { color: "#1f2937" },
+						},
+					},
+				},
+			});
+		}
+
+		pageSelect.addEventListener("change", updateChart);
+		presetSelect.addEventListener("change", updateChart);
+		metricSelect.addEventListener("change", updateChart);
+
+		updateChart();
+	})();
+	</script>
 </body>
 </html>`;
 
