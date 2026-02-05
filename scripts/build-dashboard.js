@@ -244,9 +244,7 @@ ${rows}
 	</table>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha256-YoJtQW9vZpaMnQ7tHWCkug4J3yoHgZ2d2jlK0PG2lws=" crossorigin="anonymous"></script>
-	<script id="lh-data" type="application/json">${JSON.stringify(
-			series,
-		)}<\/script>
+	<script id="lh-data" type="application/json">${JSON.stringify(series)}<\/script>
 	<script>
 	(function() {
 		const raw = document.getElementById("lh-data").textContent;
@@ -315,24 +313,55 @@ ${rows}
 				seo: "SEO",
 			};
 
-			const label = `${metricLabelMap[metric] || metric} score for ${page} (${preset})`;
+			// Thresholds are expressed as 0-100 scores.
+			const metricThresholdMap = {
+				performance: 90,
+				accessibility: 90,
+				bestPractices: 90,
+				seo: 90,
+			};
+
+			const label = (metricLabelMap[metric] || metric) +
+				" score for " +
+				page +
+				" (" +
+				preset +
+				")";
+
+			const thresholdValue = metricThresholdMap[metric];
 
 			if (chart) chart.destroy();
+
+			const datasets = [
+				{
+					label,
+					data: values,
+					borderColor: "#38bdf8",
+					backgroundColor: "rgba(56, 189, 248, 0.2)",
+					tension: 0.25,
+					pointRadius: 3,
+				},
+			];
+
+			if (typeof thresholdValue === "number") {
+				const thresholdData = labels.map(() => thresholdValue);
+				datasets.push({
+					label:
+						(metricLabelMap[metric] || metric) +
+						" threshold (" + thresholdValue + ")",
+					data: thresholdData,
+					borderColor: "#f97316",
+					borderDash: [6, 4],
+					pointRadius: 0,
+					fill: false,
+				});
+			}
 
 			chart = new Chart(ctx, {
 				type: "line",
 				data: {
 					labels,
-					datasets: [
-						{
-							label,
-							data: values,
-							borderColor: "#38bdf8",
-							backgroundColor: "rgba(56, 189, 248, 0.2)",
-							tension: 0.25,
-							pointRadius: 3,
-						},
-					],
+					datasets,
 				},
 				options: {
 					responsive: true,
