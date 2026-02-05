@@ -22,13 +22,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch existing Pages site
-        continue-on-error: true
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: existing-site
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -69,9 +62,6 @@ jobs:
 
       - name: Prepare Pages content
         if: always()
-        env:
-          EXISTING_SITE_DIR: existing-site
-          GITHUB_RUN_ID: ${{ github.run_id }}
         run: npm run build-dashboard
 
       - name: Upload Pages artifact
