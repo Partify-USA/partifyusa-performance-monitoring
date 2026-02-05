@@ -187,7 +187,7 @@ ${rows}
 	</table>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-	<script id="lh-data" type="application/json">${JSON.stringify(series)}<\/script>
+	<script id="lh-data" type="application/json">${JSON.stringify(history)}<\/script>
 	<script>
 	(function() {
 		const raw = document.getElementById("lh-data").textContent;
