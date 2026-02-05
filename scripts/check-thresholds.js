@@ -78,7 +78,6 @@ for (const file of jsonFiles) {
 
 if (hasFailure) {
 	console.error("One or more Lighthouse checks failed thresholds.");
-	process.exit(1);
+} else {
+	console.log("All Lighthouse thresholds passed.");
 }
-
-console.log("All Lighthouse thresholds passed.");

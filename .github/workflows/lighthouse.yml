@@ -5,6 +5,15 @@ on:
     - cron: "0 */4 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
@@ -27,9 +36,31 @@ jobs:
       - name: Check thresholds
         run: npm run check
 
-      - name: Upload reports
+      - name: Upload reports artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports
           path: lighthouse-reports
+
+      - name: Prepare Pages content
+        if: always()
+        run: npm run build-dashboard
+
+      - name: Upload Pages artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-pages:
+    needs: lighthouse
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

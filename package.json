@@ -5,7 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"lighthouse": "node scripts/run-lighthouse.js",
-		"check": "node scripts/check-thresholds.js"
+		"check": "node scripts/check-thresholds.js",
+		"build-dashboard": "node scripts/build-dashboard.js"
 	},
 	"keywords": [],
 	"author": "",
