@@ -6,7 +6,8 @@
 	"scripts": {
 		"lighthouse": "node scripts/run-lighthouse.js",
 		"check": "node scripts/check-thresholds.js",
-		"build-dashboard": "node scripts/build-dashboard.js"
+		"build-dashboard": "node scripts/build-dashboard.js",
+		"update-history": "node scripts/update-history.js"
 	},
 	"keywords": [],
 	"author": "",

@@ -8,10 +8,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const reportsDir = path.join(rootDir, "lighthouse-reports");
 const siteDir = path.join(rootDir, "site");
-const existingSiteDir = process.env.EXISTING_SITE_DIR
-	? path.resolve(rootDir, process.env.EXISTING_SITE_DIR)
-	: null;
-const runId = process.env.GITHUB_RUN_ID ?? "local";
+const historyPath = path.join(rootDir, "history", "lighthouse-history.json");
 
 async function getHtmlReports() {
 	try {
@@ -63,22 +60,21 @@ function parseReportFile(file) {
 
 async function buildDashboard() {
 	const htmlFiles = await getHtmlReports();
+	await mkdir(siteDir, { recursive: true });
 
-	// Start from any existing site (from previous runs) so we keep history.
-	if (existingSiteDir) {
-		try {
-			await mkdir(siteDir, { recursive: true });
-			await cp(existingSiteDir, siteDir, { recursive: true });
-		} catch (error) {
-			if (!(error && error.code === "ENOENT")) {
-				throw error;
-			}
+	// Load persistent history for charts.
+	let history = [];
+	try {
+		const rawHistory = await readFile(historyPath, "utf8");
+		const parsed = JSON.parse(rawHistory);
+		if (Array.isArray(parsed)) history = parsed;
+	} catch (error) {
+		if (!(error && error.code === "ENOENT")) {
+			throw error;
 		}
-	} else {
-		await mkdir(siteDir, { recursive: true });
 	}
 
-	if (htmlFiles.length === 0) {
+	if (htmlFiles.length === 0 && history.length === 0) {
 		const emptyHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,74 +96,21 @@ async function buildDashboard() {
 		return;
 	}
 
-	// Copy current run's reports into a run-specific folder under site/runs/<runId>/
-	const runDir = path.join(siteDir, "runs", runId, "lighthouse-reports");
-	await mkdir(runDir, { recursive: true });
-	await cp(reportsDir, runDir, { recursive: true });
-
-	// Collect all report entries across all runs.
-	const runsRoot = path.join(siteDir, "runs");
-	const runIds = await readdir(runsRoot);
-	const allEntries = [];
-	const series = [];
-
-	for (const id of runIds) {
-		const reportsPath = path.join(runsRoot, id, "lighthouse-reports");
-		let files;
-		try {
-			files = await readdir(reportsPath);
-		} catch {
-			continue;
-		}
-		for (const file of files) {
-			if (file.endsWith(".html")) {
-				const info = parseReportFile(file);
-				allEntries.push({
-					...info,
-					runId: id,
-					href: `runs/${id}/lighthouse-reports/${file}`,
-				});
-			} else if (file.endsWith(".json")) {
-				try {
-					const jsonPath = path.join(reportsPath, file);
-					const raw = await readFile(jsonPath, "utf8");
-					const report = JSON.parse(raw);
-
-					const categories = report.categories ?? {};
-					const perf = categories.performance?.score ?? null;
-					const acces = categories.accessibility?.score ?? null;
-					const bp = categories["best-practices"]?.score ?? null;
-					const seo = categories.seo?.score ?? null;
-
-					// Use Lighthouse fetchTime if available, otherwise fall back to file name.
-					const fetchTime =
-						report.lighthouseResult?.fetchTime ?? report.fetchTime ?? null;
-
-					const parsed = parseReportFile(file.replace(/\.json$/i, ".html"));
-
-					series.push({
-						runId: id,
-						page: parsed.page,
-						preset: parsed.preset,
-						fetchTime,
-						metrics: {
-							performance: perf,
-							accessibility: acces,
-							bestPractices: bp,
-							seo,
-						},
-					});
-				} catch {
-					// Ignore malformed JSON or missing fields for trend data.
-				}
-			}
-		}
+	// Copy current run's reports into site so they can be served by Pages.
+	if (htmlFiles.length > 0) {
+		await mkdir(path.join(siteDir, "lighthouse-reports"), { recursive: true });
+		await cp(reportsDir, path.join(siteDir, "lighthouse-reports"), {
+			recursive: true,
+		});
 	}
 
-	// Sort newest first by run and file.
-	allEntries.sort((a, b) => {
-		if (a.runId === b.runId) return b.file.localeCompare(a.file);
-		return b.runId.localeCompare(a.runId);
+	const allEntries = htmlFiles.map((file) => {
+		const info = parseReportFile(file);
+		return {
+			...info,
+			runId: "current",
+			href: `lighthouse-reports/${file}`,
+		};
 	});
 
 	const rows = allEntries
