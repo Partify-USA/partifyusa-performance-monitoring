@@ -243,7 +243,7 @@ ${rows}
 		</tbody>
 	</table>
 
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha256-YoJtQW9vZpaMnQ7tHWCkug4J3yoHgZ2d2jlK0PG2lws=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 	<script id="lh-data" type="application/json">${JSON.stringify(series)}<\/script>
 	<script>
 	(function() {
