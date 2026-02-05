@@ -1,0 +1,16 @@
+{
+	"name": "lighthouse-performance-monitoring",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"lighthouse": "node scripts/run-lighthouse.js",
+		"check": "node scripts/check-thresholds.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"lighthouse": "^13.0.1"
+	}
+}
