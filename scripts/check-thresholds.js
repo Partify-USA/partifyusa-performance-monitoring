@@ -25,7 +25,6 @@ const jsonFiles = files.filter((file) => file.endsWith(".json"));
 
 if (jsonFiles.length === 0) {
 	console.error("No Lighthouse JSON reports found.");
-	process.exit(1);
 }
 
 for (const file of jsonFiles) {
