@@ -48,17 +48,25 @@ async function runLighthouseForUrl(url, preset) {
 		`${safeName}-${preset}-${timestamp}`,
 	);
 
+	// Lighthouse's CLI presets do not support a value of "mobile".
+	// Mobile is the default configuration, and "desktop" is an explicit preset.
+	// We still use the preset name in the file for clarity, but only pass
+	// --preset when it is a supported CLI value.
+	const presetFlag = preset === "desktop" ? "--preset=desktop" : "";
+
 	const command = [
 		"npx lighthouse",
 		`"${url}"`,
 		"--quiet",
 		"--throttling-method=simulate",
-		`--preset=${preset}`,
+		presetFlag,
 		"--chrome-flags='--headless --no-sandbox'",
 		"--output=json",
 		"--output=html",
 		`--output-path="${baseOutputPath}"`,
-	].join(" ");
+	]
+		.filter(Boolean)
+		.join(" ");
 
 	console.log(`Running Lighthouse (${preset}) for ${url}`);
 
