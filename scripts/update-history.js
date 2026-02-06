@@ -56,6 +56,7 @@ async function collectCurrentRun() {
 	}
 
 	const jsonFiles = files.filter((file) => file.endsWith(".json"));
+	const htmlFiles = files.filter((file) => file.endsWith(".html"));
 	const entries = [];
 
 	for (const file of jsonFiles) {
@@ -75,10 +76,22 @@ async function collectCurrentRun() {
 
 			const parsed = parseReportFile(file);
 
+			// Find matching HTML report
+			const htmlFile = htmlFiles.find((html) => {
+				const jsonBase = file.replace(/\.json$/, "");
+				const htmlBase = html
+					.replace(/\.report\.html$/, "")
+					.replace(/\.html$/, "");
+				return htmlBase === jsonBase;
+			});
+
+			const reportUrl = htmlFile ? `lighthouse-reports/${htmlFile}` : null;
+
 			entries.push({
 				runId,
 				runNumber,
 				runUrl,
+				reportUrl,
 				page: parsed.page,
 				preset: parsed.preset,
 				fetchTime,

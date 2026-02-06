@@ -124,11 +124,25 @@ async function buildDashboard() {
 					: entry.runId || "";
 			const pageLabel = entry.page || "";
 			const presetLabel = entry.preset || "";
-			const timestampLabel = entry.fetchTime
-				? new Date(entry.fetchTime).toLocaleString()
-				: "";
-			const href = entry.runUrl || "";
-			const linkCell = href ? `<a href="${href}">View run</a>` : "";
+
+			// Format timestamp in a consistent way (EST timezone)
+			let timestampLabel = "";
+			if (entry.fetchTime) {
+				const date = new Date(entry.fetchTime);
+				timestampLabel = date.toLocaleString("en-US", {
+					timeZone: "America/New_York",
+					year: "numeric",
+					month: "numeric",
+					day: "numeric",
+					hour: "numeric",
+					minute: "2-digit",
+					second: "2-digit",
+					hour12: true,
+				});
+			}
+
+			const href = entry.reportUrl || entry.runUrl || "";
+			const linkCell = href ? `<a href="${href}">View report</a>` : "";
 			return `<tr>
 				<td>${runLabel}</td>
 				<td>${pageLabel}</td>
