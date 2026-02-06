@@ -92,7 +92,7 @@ await cleanupOldJsonReports();
 
 for (const url of urls) {
 	await runLighthouseForUrl(url, "mobile");
-	// await runLighthouseForUrl(url, "desktop");
+	await runLighthouseForUrl(url, "desktop");
 }
 
 console.log("All Lighthouse runs completed.");
