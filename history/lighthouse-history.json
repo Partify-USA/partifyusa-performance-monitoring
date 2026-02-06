@@ -26,5 +26,19 @@
       "bestPractices": 0.5,
       "seo": 0.92
     }
+  },
+  {
+    "runId": "21739566646",
+    "runNumber": 26,
+    "runUrl": "https://github.com/Partify-USA/partifyusa-performance-monitoring/actions/runs/21739566646",
+    "page": "partifyusa com products dodge ram 1500 1500 classic 2500 3500 capa certified driver side fender ch1240269c  pos 1  psq ch1240269c  ss e  v 1 0",
+    "preset": "mobile",
+    "fetchTime": "2026-02-06T05:13:18.580Z",
+    "metrics": {
+      "performance": 0.27,
+      "accessibility": 0.9,
+      "bestPractices": 0.5,
+      "seo": 0.92
+    }
   }
 ]
