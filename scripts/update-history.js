@@ -76,9 +76,12 @@ async function collectCurrentRun() {
 
 			const parsed = parseReportFile(file);
 
-			// Find matching HTML report
+			// Find matching HTML report: Lighthouse writes
+			//   <base>.report.json and <base>.report.html
 			const htmlFile = htmlFiles.find((html) => {
-				const jsonBase = file.replace(/\.json$/, "");
+				const jsonBase = file
+					.replace(/\.report\.json$/, "")
+					.replace(/\.json$/, "");
 				const htmlBase = html
 					.replace(/\.report\.html$/, "")
 					.replace(/\.html$/, "");
