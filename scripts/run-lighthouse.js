@@ -1,5 +1,5 @@
 import { exec } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +18,21 @@ const urls = [
 const outputDir = path.resolve(__dirname, "..", "lighthouse-reports");
 
 await mkdir(outputDir, { recursive: true });
+
+async function cleanupOldJsonReports() {
+	try {
+		const files = await readdir(outputDir);
+		await Promise.all(
+			files
+				.filter((file) => file.endsWith(".json"))
+				.map((file) => rm(path.join(outputDir, file), { force: true })),
+		);
+	} catch (error) {
+		if (!(error && error.code === "ENOENT")) {
+			throw error;
+		}
+	}
+}
 
 function runCommand(command) {
 	return new Promise((resolve, reject) => {
@@ -72,6 +87,8 @@ async function runLighthouseForUrl(url, preset) {
 
 	await runCommand(command);
 }
+
+await cleanupOldJsonReports();
 
 for (const url of urls) {
 	await runLighthouseForUrl(url, "mobile");
