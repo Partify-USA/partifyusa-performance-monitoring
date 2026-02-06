@@ -223,6 +223,33 @@ ${rows}
 		} catch {}
 		if (!Array.isArray(data) || data.length === 0) return;
 
+		function shortenPageLabel(page) {
+			if (!page) return page;
+
+			let result = page;
+
+			// Drop domain portion before " products " if present.
+			const productsIdx = result.indexOf(" products ");
+			if (productsIdx !== -1) {
+				result = result.slice(productsIdx + " products ".length);
+			}
+
+			// Heuristically drop query-ish suffix starting at " pos ".
+			const posIdx = result.indexOf(" pos ");
+			if (posIdx !== -1) {
+				result = result.slice(0, posIdx);
+			}
+
+			result = result.replace(/\s+/g, " ").trim();
+
+			const MAX_LEN = 80;
+			if (result.length > MAX_LEN) {
+				result = result.slice(0, MAX_LEN - 1) + "…";
+			}
+
+			return result;
+		}
+
 		// Normalize and sort by time within each series.
 		for (const d of data) {
 			if (d.fetchTime) {
@@ -242,7 +269,7 @@ ${rows}
 		pages.forEach((p) => {
 			const opt = document.createElement("option");
 			opt.value = p;
-			opt.textContent = p;
+			opt.textContent = shortenPageLabel(p);
 			pageSelect.appendChild(opt);
 		});
 
@@ -292,7 +319,7 @@ ${rows}
 
 			const label = (metricLabelMap[metric] || metric) +
 				" score for " +
-				page +
+				shortenPageLabel(page) +
 				" (" +
 				preset +
 				")";
