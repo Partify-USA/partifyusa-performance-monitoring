@@ -162,6 +162,9 @@ async function buildDashboard() {
 		body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; background: #0b1120; color: #e5e7eb; }
 		h1 { margin-bottom: 0.5rem; }
 		p.subtitle { margin-top: 0; margin-bottom: 1.5rem; color: #9ca3af; }
+		.header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+		.run-button { background: #38bdf8; color: #020617; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+		.run-button:hover { background: #0ea5e9; }
 		table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #020617; border-radius: 0.5rem; overflow: hidden; }
 		th, td { padding: 0.75rem 1rem; text-align: left; }
 		th { background: #111827; font-weight: 600; border-bottom: 1px solid #1f2937; }
@@ -172,8 +175,13 @@ async function buildDashboard() {
 	</style>
 </head>
 <body>
-	<h1>Lighthouse Dashboard</h1>
-	<p class="subtitle">History of Lighthouse reports for all monitored URLs.</p>
+	<div class="header-actions">
+		<div>
+			<h1>Lighthouse Dashboard</h1>
+			<p class="subtitle">History of Lighthouse reports for all monitored URLs.</p>
+		</div>
+		<a href="https://github.com/Partify-USA/partifyusa-performance-monitoring/actions/workflows/lighthouse.yml" target="_blank" class="run-button">▶ Run Lighthouse Now</a>
+	</div>
 
 	<section id="charts">
 		<h2>Trends</h2>
@@ -301,6 +309,7 @@ ${rows}
 
 			const labels = seriesPoints.map((d) => new Date(d._ts).toLocaleString());
 			const values = seriesPoints.map((d) => (d.metrics[metric] || 0) * 100);
+			const reportUrls = seriesPoints.map((d) => d.reportUrl || d.runUrl || null);
 
 			const metricLabelMap = {
 				performance: "Performance",
@@ -375,6 +384,15 @@ ${rows}
 							ticks: { color: "#9ca3af" },
 							grid: { color: "#1f2937" },
 						},
+					},
+					onClick: (event, elements) => {
+						if (elements.length > 0) {
+							const index = elements[0].index;
+							const url = reportUrls[index];
+							if (url) {
+								window.open(url, '_blank');
+							}
+						}
 					},
 				},
 			});
