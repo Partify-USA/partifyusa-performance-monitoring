@@ -2,6 +2,7 @@ import { exec } from "node:child_process";
 import { mkdir, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import puppeteer from "puppeteer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,8 +55,27 @@ function makeSafeFileName(input) {
 		.replace(/[^a-zA-Z0-9]/g, "_");
 }
 
+async function getFinalUrl(url) {
+	console.log(`Checking for redirects: ${url}`);
+	const browser = await puppeteer.launch({ headless: true });
+	const page = await browser.newPage();
+	await page.goto(url, { waitUntil: "networkidle0" });
+	const finalUrl = page.url();
+	await browser.close();
+
+	if (finalUrl !== url) {
+		console.log(`  → Redirected to: ${finalUrl}`);
+	} else {
+		console.log(`  → No redirect detected`);
+	}
+
+	return finalUrl;
+}
+
 async function runLighthouseForUrl(url, preset) {
-	const safeName = makeSafeFileName(url);
+	// Get the post-redirect URL to ensure consistent testing
+	const finalUrl = await getFinalUrl(url);
+	const safeName = makeSafeFileName(finalUrl);
 	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
 	const baseOutputPath = path.join(
@@ -71,7 +91,7 @@ async function runLighthouseForUrl(url, preset) {
 
 	const command = [
 		"npx lighthouse",
-		`"${url}"`,
+		`"${finalUrl}"`,
 		"--quiet",
 		"--throttling-method=simulate",
 		presetFlag,
@@ -83,7 +103,7 @@ async function runLighthouseForUrl(url, preset) {
 		.filter(Boolean)
 		.join(" ");
 
-	console.log(`Running Lighthouse (${preset}) for ${url}`);
+	console.log(`Running Lighthouse (${preset}) for ${finalUrl}`);
 
 	await runCommand(command);
 }
