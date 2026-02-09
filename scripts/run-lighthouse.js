@@ -96,7 +96,7 @@ async function runLighthouseForUrl(url, preset) {
 		"npx lighthouse",
 		`"${finalUrl}"`,
 		"--quiet",
-		"--throttling-method=simulate",
+		"--throttling-method=provided",
 		presetFlag,
 		"--chrome-flags='--headless --no-sandbox'",
 		"--output=json",
