@@ -78,7 +78,8 @@ async function getFinalUrl(url) {
 async function runLighthouseForUrl(url, preset) {
 	// Get the post-redirect URL to ensure consistent testing
 	const finalUrl = await getFinalUrl(url);
-	const safeName = makeSafeFileName(finalUrl);
+	// Use original URL for filename to maintain consistent history tracking
+	const safeName = makeSafeFileName(url);
 	const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
 	const baseOutputPath = path.join(
