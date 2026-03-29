@@ -9058,5 +9058,20 @@
       "bestPractices": 0.5,
       "seo": 0.92
     }
+  },
+  {
+    "runId": "23705158014",
+    "runNumber": 351,
+    "runUrl": "https://github.com/Partify-USA/partifyusa-performance-monitoring/actions/runs/23705158014",
+    "reportUrl": "lighthouse-reports/partifyusa_com_products_dodge_ram_1500_1500_classic_2500_3500_capa_certified_driver_side_fender_ch1240269c__pos_1__psq_ch1240269c__ss_e__v_1_0-mobile-2026-03-29T08-35-45-596Z.report.html",
+    "page": "partifyusa com products dodge ram 1500 1500 classic 2500 3500 capa certified driver side fender ch1240269c  pos 1  psq ch1240269c  ss e  v 1 0",
+    "preset": "mobile",
+    "fetchTime": "2026-03-29T08:35:48.879Z",
+    "metrics": {
+      "performance": null,
+      "accessibility": null,
+      "bestPractices": null,
+      "seo": null
+    }
   }
 ]
