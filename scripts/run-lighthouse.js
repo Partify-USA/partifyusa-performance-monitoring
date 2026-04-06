@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
   These should be real product pages you care about.
 */
 const urls = [
-	"https://partifyusa.com/products/dodge-ram-1500-1500-classic-2500-3500-capa-certified-driver-side-fender-ch1240269c?_pos=1&_psq=ch1240269c&_ss=e&_v=1.0",
+	"https://partifyusa.com/products/dodge-ram-1500-1500-classic-2500-3500-4500-5500-driver-side-fender-ch1240269?_pos=1&_psq=ch1240269&_ss=e&_v=1.0",
 	// "https://partifyusa.com/products/subaru-impreza-wrx-wrx-sti-front-bumper-su1000167",
 ];
 
