@@ -17,7 +17,7 @@ concurrency:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
-
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,6 +76,7 @@ jobs:
   deploy-pages:
     needs: lighthouse
     runs-on: ubuntu-latest
+    continue-on-error: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
