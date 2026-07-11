@@ -23518,5 +23518,35 @@
       "bestPractices": 0.5,
       "seo": 0.92
     }
+  },
+  {
+    "runId": "29146310094",
+    "runNumber": 975,
+    "runUrl": "https://github.com/Partify-USA/partifyusa-performance-monitoring/actions/runs/29146310094",
+    "reportUrl": "lighthouse-reports/partifyusa_com_products_dodge_ram_1500_1500_classic_2500_3500_4500_5500_driver_side_fender_ch1240269__pos_1__psq_ch1240269__ss_e__v_1_0-desktop-2026-07-11T08-40-02-299Z.report.html",
+    "page": "partifyusa com products dodge ram 1500 1500 classic 2500 3500 4500 5500 driver side fender ch1240269  pos 1  psq ch1240269  ss e  v 1 0",
+    "preset": "desktop",
+    "fetchTime": "2026-07-11T08:40:05.333Z",
+    "metrics": {
+      "performance": 0.66,
+      "accessibility": 0.89,
+      "bestPractices": 0.54,
+      "seo": 0.92
+    }
+  },
+  {
+    "runId": "29146310094",
+    "runNumber": 975,
+    "runUrl": "https://github.com/Partify-USA/partifyusa-performance-monitoring/actions/runs/29146310094",
+    "reportUrl": "lighthouse-reports/partifyusa_com_products_dodge_ram_1500_1500_classic_2500_3500_4500_5500_driver_side_fender_ch1240269__pos_1__psq_ch1240269__ss_e__v_1_0-mobile-2026-07-11T08-38-29-555Z.report.html",
+    "page": "partifyusa com products dodge ram 1500 1500 classic 2500 3500 4500 5500 driver side fender ch1240269  pos 1  psq ch1240269  ss e  v 1 0",
+    "preset": "mobile",
+    "fetchTime": "2026-07-11T08:38:38.356Z",
+    "metrics": {
+      "performance": 0.47,
+      "accessibility": 0.74,
+      "bestPractices": 0.5,
+      "seo": 0.92
+    }
   }
 ]
